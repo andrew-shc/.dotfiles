@@ -2,15 +2,23 @@ local augroup = vim.api.nvim_create_augroup
 local autocmd = vim.api.nvim_create_autocmd
 
 -- ── Open neo-tree when nvim is launched with a directory ─────────────────────
--- Uses VimEnter so neo-tree is fully initialized before any autocmds fire,
--- avoiding WinClosed conflicts with toggleterm and other floating windows.
 autocmd("VimEnter", {
   group = augroup("neotree_dir_open", { clear = true }),
   callback = function()
     if vim.fn.argc(-1) == 1 then
       local stat = vim.uv.fs_stat(vim.fn.argv(0))
       if stat and stat.type == "directory" then
-        vim.cmd("Neotree " .. vim.fn.fnameescape(vim.fn.argv(0)))
+        local dir = vim.fn.fnameescape(vim.fn.argv(0))
+        local dirbuf = vim.api.nvim_get_current_buf()
+        vim.cmd("Neotree " .. dir)
+        -- Wipe the directory buffer so it doesn't linger as a tab
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(dirbuf)
+            and vim.fn.isdirectory(vim.api.nvim_buf_get_name(dirbuf)) == 1
+          then
+            vim.api.nvim_buf_delete(dirbuf, { force = true })
+          end
+        end)
       end
     end
   end,
@@ -86,6 +94,52 @@ autocmd("FileType", {
   group = augroup("cmake_comment", { clear = true }),
   pattern = "cmake",
   callback = function() vim.bo.commentstring = "# %s" end,
+})
+
+-- ── Sync project.nvim history → dashboard cache on quit ──────────────────────
+-- Dashboard uses its own Lua-serialized cache; project.nvim writes plain text.
+-- This merges both so the dashboard always shows all known projects.
+autocmd("VimLeavePre", {
+  group = augroup("sync_project_cache", { clear = true }),
+  callback = function()
+    local cache_path   = vim.fn.stdpath("cache") .. "/dashboard/cache"
+    local history_path = vim.fn.stdpath("data")  .. "/project_nvim/project_history"
+
+    -- Read project.nvim plain-text history
+    local pnvim = {}
+    local f = io.open(history_path, "r")
+    if f then
+      for line in f:lines() do
+        if line ~= "" then table.insert(pnvim, line) end
+      end
+      f:close()
+    end
+
+    -- Read existing dashboard cache (Lua table)
+    local existing = {}
+    local cf = io.open(cache_path, "r")
+    if cf then
+      local chunk = cf:read("*a")
+      cf:close()
+      local ok, result = pcall(loadstring(chunk))
+      if ok and type(result) == "table" then existing = result end
+    end
+
+    -- Merge: project.nvim entries first, then anything extra from dashboard
+    local seen, merged = {}, {}
+    for _, p in ipairs(pnvim) do
+      if not seen[p] then seen[p] = true; table.insert(merged, p) end
+    end
+    for _, p in ipairs(existing) do
+      if not seen[p] then seen[p] = true; table.insert(merged, p) end
+    end
+
+    local out = io.open(cache_path, "w")
+    if out then
+      out:write("return " .. vim.inspect(merged))
+      out:close()
+    end
+  end,
 })
 
 -- ── Conda / venv hint ────────────────────────────────────────────────────────

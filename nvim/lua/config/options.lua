@@ -29,6 +29,7 @@ opt.sidescrolloff = 8
 opt.colorcolumn = "100"
 opt.showmode = false
 opt.laststatus = 3   -- global statusline
+opt.showtabline = 2  -- always show bufferline
 
 -- Splits open right/below
 opt.splitright = true
@@ -47,7 +48,18 @@ opt.timeoutlen = 300
 -- Completion
 opt.completeopt = "menuone,noselect,noinsert"
 
--- Clipboard
+-- Clipboard (OSC 52 for SSH/tmux)
+vim.g.clipboard = {
+  name = 'OSC 52',
+  copy = {
+    ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+    ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
+  },
+  paste = {
+    ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+    ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
+  },
+}
 opt.clipboard = "unnamedplus"
 
 -- Folds via treesitter (new Neovim 0.12 built-in); disabled by default (open with zR)

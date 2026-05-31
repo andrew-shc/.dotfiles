@@ -51,5 +51,11 @@ map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Show diagnostic float
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal" })
 
 -- Convenience: open Lazy and Mason from anywhere
-map("n", "<leader>L",  ":Lazy<CR>",  { desc = "Lazy" })
-map("n", "<leader>M",  ":Mason<CR>", { desc = "Mason" })
+map("n", "<leader>L",  ":Lazy<CR>",      { desc = "Lazy" })
+map("n", "<leader>M",  ":Mason<CR>",     { desc = "Mason" })
+map("n", "<leader>H",  ":Dashboard<CR>", { desc = "Home dashboard" })
+
+-- Kitty notification (manual trigger — useful after any long shell command)
+map("n", "<leader>zn", function()
+  require("util").notify_kitty("Neovim", "Done!")
+end, { desc = "Notify Kitty" })

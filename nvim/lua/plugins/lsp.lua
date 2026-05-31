@@ -2,20 +2,32 @@ return {
   -- ── Mason: install LSP servers, DAP adapters, formatters ──────────────────
   {
     "williamboman/mason.nvim",
+    lazy = false,
     build = ":MasonUpdate",
     opts = { ui = { border = "rounded" } },
   },
 
   {
     "williamboman/mason-lspconfig.nvim",
+    lazy = false,
     dependencies = "williamboman/mason.nvim",
     opts = {
-      ensure_installed = { "clangd", "pyright", "cmake", "lua_ls" },
+      ensure_installed = { "clangd", "basedpyright", "cmake", "lua_ls" },
       automatic_installation = true,
     },
   },
 
-  -- ── Core LSP config ───────────────────────────────────────────────────────
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    lazy = false,
+    dependencies = "williamboman/mason.nvim",
+    opts = {
+      ensure_installed = { "ruff", "stylua", "clang-format" },
+      auto_update = false,
+    },
+  },
+
+  -- ── Core LSP config (Neovim 0.11+ native API) ────────────────────────────
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
@@ -23,56 +35,55 @@ return {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "hrsh7th/cmp-nvim-lsp",
-      { "folke/neodev.nvim", opts = {} },    -- Neovim Lua API types
+      { "folke/neodev.nvim", opts = {} },
       "j-hui/fidget.nvim",
     },
     config = function()
-      local lspconfig = require("lspconfig")
-      local caps      = vim.tbl_deep_extend(
+      local caps = vim.tbl_deep_extend(
         "force",
         vim.lsp.protocol.make_client_capabilities(),
         require("cmp_nvim_lsp").default_capabilities()
       )
 
-      local function on_attach(client, bufnr)
-        local map = function(keys, fn, desc)
-          vim.keymap.set("n", keys, fn, { buffer = bufnr, desc = "LSP: " .. desc })
-        end
-        local tb = require("telescope.builtin")
+      -- Keymaps and inlay hints via LspAttach (replaces on_attach)
+      vim.api.nvim_create_autocmd("LspAttach", {
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          local bufnr  = args.buf
+          local map    = function(keys, fn, desc)
+            vim.keymap.set("n", keys, fn, { buffer = bufnr, desc = "LSP: " .. desc })
+          end
+          local tb = require("telescope.builtin")
 
-        map("gd",         tb.lsp_definitions,          "Go to definition")
-        map("gD",         vim.lsp.buf.declaration,     "Go to declaration")
-        map("gr",         tb.lsp_references,           "References")
-        map("gi",         tb.lsp_implementations,      "Go to implementation")
-        map("gt",         tb.lsp_type_definitions,     "Type definition")
-        map("K",          vim.lsp.buf.hover,           "Hover docs")
-        map("<leader>ls", vim.lsp.buf.signature_help,  "Signature help")
-        map("<leader>lr", vim.lsp.buf.rename,          "Rename")
-        map("<leader>la", vim.lsp.buf.code_action,     "Code action")
-        map("<leader>lf", function() vim.lsp.buf.format({ async = true }) end, "Format")
-        map("<leader>li", "<cmd>LspInfo<cr>",          "LSP info")
+          map("gd",         tb.lsp_definitions,          "Go to definition")
+          map("gD",         vim.lsp.buf.declaration,     "Go to declaration")
+          map("gr",         tb.lsp_references,           "References")
+          map("gi",         tb.lsp_implementations,      "Go to implementation")
+          map("gt",         tb.lsp_type_definitions,     "Type definition")
+          map("K",          vim.lsp.buf.hover,           "Hover docs")
+          map("<leader>ls", vim.lsp.buf.signature_help,  "Signature help")
+          map("<leader>lr", vim.lsp.buf.rename,          "Rename")
+          map("<leader>la", vim.lsp.buf.code_action,     "Code action")
+          map("<leader>lf", function() vim.lsp.buf.format({ async = true }) end, "Format")
+          map("<leader>li", "<cmd>LspInfo<cr>",          "LSP info")
 
-        -- Inlay hints (Neovim 0.10+)
-        if vim.lsp.inlay_hint and client.supports_method("textDocument/inlayHint") then
-          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-          map("<leader>lh", function()
-            vim.lsp.inlay_hint.enable(
-              not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
-              { bufnr = bufnr }
-            )
-          end, "Toggle inlay hints")
-        end
-      end
+          if client and vim.lsp.inlay_hint and client.supports_method("textDocument/inlayHint") then
+            vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+            map("<leader>lh", function()
+              vim.lsp.inlay_hint.enable(
+                not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
+                { bufnr = bufnr }
+              )
+            end, "Toggle inlay hints")
+          end
+        end,
+      })
 
       -- ── clangd ── C / C++ / CUDA / OptiX ──────────────────────────────────
-      -- CUDA: clangd reads compile_commands.json to discover --cuda-gpu-arch;
-      -- or put a .clangd file in the project root (see templates/.clangd).
-      -- OptiX: add -I/path/to/OptiX/include in compile_flags.txt / .clangd.
-      lspconfig.clangd.setup({
+      vim.lsp.config("clangd", {
         capabilities = vim.tbl_deep_extend("force", caps, {
           offsetEncoding = { "utf-16" },
         }),
-        on_attach = on_attach,
         cmd = {
           "clangd",
           "--background-index",
@@ -82,14 +93,12 @@ return {
           "--function-arg-placeholders",
           "--fallback-style=llvm",
           "--offset-encoding=utf-16",
-          -- Default GPU arch; override per-project via .clangd CompileFlags
-          "--cuda-gpu-arch=sm_86",
         },
         filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
-        root_dir = require("lspconfig.util").root_pattern(
+        root_markers = {
           "compile_commands.json", "compile_flags.txt", ".clangd",
-          "CMakeLists.txt", "Makefile", ".git"
-        ),
+          "CMakeLists.txt", "Makefile", ".git",
+        },
         init_options = {
           usePlaceholders    = true,
           completeUnimported = true,
@@ -97,19 +106,18 @@ return {
         },
       })
 
-      -- ── pyright ── Python / PyTorch / NumPy / OpenCV / etc. ───────────────
-      -- Active conda / venv is detected automatically via venv-selector.nvim.
-      lspconfig.pyright.setup({
+      -- ── basedpyright ── Python / PyTorch / NumPy / OpenCV / etc. ──────────
+      vim.lsp.config("basedpyright", {
         capabilities = caps,
-        on_attach    = on_attach,
+        root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
         settings = {
-          pyright = {
-            disableOrganizeImports = true,   -- ruff handles imports
+          basedpyright = {
+            disableOrganizeImports = true,
           },
           python = {
             analysis = {
               autoSearchPaths        = true,
-              diagnosticMode         = "workspace",
+              diagnosticMode         = "openFilesOnly",
               useLibraryCodeForTypes = true,
               typeCheckingMode       = "basic",
             },
@@ -118,12 +126,13 @@ return {
       })
 
       -- ── cmake-language-server ─────────────────────────────────────────────
-      lspconfig.cmake.setup({ capabilities = caps, on_attach = on_attach })
+      vim.lsp.config("cmake", { capabilities = caps })
+
+
 
       -- ── lua_ls ── for editing this config ─────────────────────────────────
-      lspconfig.lua_ls.setup({
+      vim.lsp.config("lua_ls", {
         capabilities = caps,
-        on_attach    = on_attach,
         settings = {
           Lua = {
             runtime   = { version = "LuaJIT" },
@@ -133,7 +142,31 @@ return {
           },
         },
       })
+
+      vim.lsp.enable({ "clangd", "basedpyright", "cmake", "lua_ls" })
     end,
+  },
+
+  -- ── Python venv selector (mirrors VS Code's "Select Interpreter") ─────────
+  {
+    "linux-cultist/venv-selector.nvim",
+    branch = "regexp",
+    ft = "python",
+    dependencies = { "neovim/nvim-lspconfig", "nvim-telescope/telescope.nvim" },
+    opts = {
+      settings = {
+        -- fdfind is the binary name when installed via apt; conda install -c conda-forge fd gives "fd"
+        fd_binary_name = vim.fn.executable("fd") == 1 and "fd" or "fdfind",
+        search = {
+          anaconda_base = { enabled = true },
+          anaconda_envs = { enabled = true },
+          venv          = { enabled = false },
+        },
+      },
+    },
+    keys = {
+      { "<leader>lv", "<cmd>VenvSelect<cr>", desc = "Select Python venv" },
+    },
   },
 
   -- ── LSP progress indicator ────────────────────────────────────────────────
@@ -148,7 +181,7 @@ return {
     ft = { "c", "cpp", "cuda" },
     opts = {
       inlay_hints = {
-        inline              = true,
+        inline               = true,
         show_parameter_hints = true,
         parameter_hints_prefix = "<- ",
         other_hints_prefix     = "=> ",
@@ -161,8 +194,6 @@ return {
   },
 
   -- ── cmake-tools: build / run / debug CMake projects inside Neovim ─────────
-  -- Automatically sets cmake_generate_options to export compile_commands.json
-  -- so clangd picks up CUDA / OptiX flags immediately.
   {
     "Civitasv/cmake-tools.nvim",
     ft = { "cmake", "cpp", "c", "cuda" },
@@ -177,8 +208,24 @@ return {
     },
     keys = {
       { "<leader>mg", "<cmd>CMakeGenerate<cr>",           desc = "CMake generate" },
-      { "<leader>mb", "<cmd>CMakeBuild<cr>",              desc = "CMake build" },
-      { "<leader>mr", "<cmd>CMakeRun<cr>",                desc = "CMake run" },
+      { "<leader>mb", function()
+          require("cmake-tools").build({}, function(result)
+            local ok = result.code == require("cmake-tools.types").SUCCESS
+            require("util").notify_kitty(
+              ok and "CMake Build ✓" or "CMake Build ✗",
+              ok and "Build succeeded" or "Build failed"
+            )
+          end)
+        end, desc = "CMake build" },
+      { "<leader>mr", function()
+          require("cmake-tools").run({}, function(result)
+            local ok = result.code == require("cmake-tools.types").SUCCESS
+            require("util").notify_kitty(
+              ok and "CMake Run ✓" or "CMake Run ✗",
+              ok and "Run finished" or "Run failed"
+            )
+          end)
+        end, desc = "CMake run" },
       { "<leader>md", "<cmd>CMakeDebug<cr>",              desc = "CMake debug" },
       { "<leader>ms", "<cmd>CMakeSelectBuildType<cr>",    desc = "CMake build type" },
       { "<leader>mt", "<cmd>CMakeSelectLaunchTarget<cr>", desc = "CMake target" },

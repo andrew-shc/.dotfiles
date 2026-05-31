@@ -1,4 +1,41 @@
 return {
+  -- ── Project root detection & switching ───────────────────────────────────
+  {
+    "ahmedkhalf/project.nvim",
+    lazy = false,
+    config = function()
+      require("project_nvim").setup({
+        manual_mode      = true,   -- never auto-cd; only switch via <leader>fp
+        detection_methods = { "pattern" },
+        patterns = { ".git", "pyproject.toml", "package.json", "Makefile", "CMakeLists.txt" },
+        show_hidden = false,
+      })
+    end,
+    keys = {
+      {
+        "<leader>fp",
+        function()
+          require("telescope").extensions.projects.projects({
+            attach_mappings = function(prompt_bufnr, _)
+              local actions      = require("telescope.actions")
+              local action_state = require("telescope.actions.state")
+              actions.select_default:replace(function()
+                local sel = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                if sel then
+                  vim.cmd("cd " .. vim.fn.fnameescape(sel.value))
+                  require("neo-tree.command").execute({ action = "show", dir = sel.value })
+                end
+              end)
+              return true
+            end,
+          })
+        end,
+        desc = "Projects",
+      },
+    },
+  },
+
   -- ── Session management (one session per project root) ─────────────────────
   -- Saves/restores buffers, splits, and cwd automatically.
   -- Use: cd into a project dir, work, quit — next time `nvim .` restores it.
@@ -30,7 +67,12 @@ return {
         filtered_items = { visible = true, hide_dotfiles = false, hide_gitignored = true },
         follow_current_file = { enabled = true },
       },
-      window = { width = 35 },
+      window = {
+        width = 35,
+        mappings = {
+          ["<space>"] = "none",  -- don't steal leader key
+        },
+      },
       close_if_last_window = false,
     },
   },
@@ -85,6 +127,7 @@ return {
       })
       telescope.load_extension("fzf")
       telescope.load_extension("ui-select")
+      telescope.load_extension("projects")
     end,
   },
 
@@ -218,6 +261,16 @@ return {
     config = function()
       require("mini.ai").setup({ n_lines = 500 })     -- better a/i text objects
       require("mini.align").setup()                    -- ga / gA align operators
+    end,
+  },
+
+  -- ── Kitty scrollback in Neovim ───────────────────────────────────────────
+  {
+    "mikesmithgh/kitty-scrollback.nvim",
+    lazy = false,
+    version = "^6.0.0",
+    config = function()
+      require("kitty-scrollback").setup()
     end,
   },
 

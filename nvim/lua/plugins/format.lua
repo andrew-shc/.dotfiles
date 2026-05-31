@@ -50,7 +50,6 @@ return {
       local lint = require("lint")
       lint.linters_by_ft = {
         python = { "ruff" },
-        cmake  = { "cmakelint" },
       }
       local group = vim.api.nvim_create_augroup("nvim_lint", { clear = true })
       vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {

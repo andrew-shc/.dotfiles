@@ -62,6 +62,7 @@ return {
         separator_style = "slant",
         diagnostics = "nvim_lsp",
         show_close_icon = false,
+        always_show_bufferline = true,
         offsets = {
           { filetype = "neo-tree", text = "Explorer", text_align = "left", separator = true },
         },
@@ -95,10 +96,19 @@ return {
     "nvimdev/dashboard-nvim",
     event = "VimEnter",
     dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function(_, opts)
+      opts.config.project.action = function(path)
+        vim.cmd("cd " .. vim.fn.fnameescape(path))
+        require("neo-tree.command").execute({ action = "show", dir = path })
+      end
+      require("dashboard").setup(opts)
+    end,
     opts = {
       theme = "hyper",
       config = {
         week_header = { enable = true },
+        project = { enable = true, limit = 20, icon = " ", label = "Recent Projects" },
+        mru     = { enable = true, limit = 5,  label = "Recent Files" },
         shortcut = {
           { desc = "Lazy",   group = "Special", action = "Lazy",                 key = "l" },
           { desc = "Files",  group = "Label",   action = "Telescope find_files", key = "f" },
@@ -112,4 +122,21 @@ return {
 
   -- ── Icons ────────────────────────────────────────────────────────────────────
   { "nvim-tree/nvim-web-devicons", lazy = true },
+
+  -- ── Inline image rendering (Kitty graphics protocol) ─────────────────────────
+  {
+    "3rd/image.nvim",
+    build = "luarocks install magick",
+    event = "VeryLazy",
+    opts = {
+      backend = "kitty",
+      integrations = {
+        markdown = { enabled = true, download_remote_images = true },
+      },
+      max_width_window_percentage = 60,
+      max_height_window_percentage = 40,
+      -- required when inside tmux (needs `set -gq allow-passthrough on` in tmux.conf)
+      tmux_show_only_in_active_window = true,
+    },
+  },
 }
