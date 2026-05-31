@@ -1,0 +1,60 @@
+# .clang-format — CUDA / C++ / OptiX style guide.
+# Loosely follows Google C++ style with wider columns for GPU code.
+# Copy to your project root.
+
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Column limit
+ColumnLimit: 100
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+
+# Braces
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Includes
+IncludeBlocks: Regroup
+IncludeCategories:
+  # CUDA / OptiX system headers first
+  - Regex:    "^<(cuda|optix|device_launch_parameters)"
+    Priority: 1
+  # Other angle-bracket system headers
+  - Regex:    "^<"
+    Priority: 2
+  # Project headers
+  - Regex:    "^\".*\""
+    Priority: 3
+SortIncludes: CaseSensitive
+
+# Pointer / reference alignment
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpacesInAngles: false
+SpaceBeforeParens: ControlStatements
+
+# Constructor initializers
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+
+# Template
+AlwaysBreakTemplateDeclarations: Yes
+
+# CUDA-specific: __global__, __device__, __host__ are effectively attributes
+AttributeMacros:
+  - __global__
+  - __device__
+  - __host__
+  - __forceinline__
+  - __shared__
+  - __constant__

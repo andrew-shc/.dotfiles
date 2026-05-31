@@ -1,0 +1,19 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "warning",
+  "reportAttributeAccessIssue": "warning",
+
+  "exclude": [
+    "**/build",
+    "**/__pycache__",
+    "**/.git"
+  ],
+
+  "extraPaths": [
+    "src"
+  ]
+}

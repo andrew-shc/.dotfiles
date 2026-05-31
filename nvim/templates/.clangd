@@ -1,0 +1,48 @@
+# .clangd — project-root config for CUDA / OptiX projects.
+# Copy this file to your project root and adjust paths.
+#
+# After editing, run :CMakeGenerate (which writes build/compile_commands.json)
+# then: ln -s build/compile_commands.json .
+# clangd will restart automatically once it sees the new file.
+
+CompileFlags:
+  Add:
+    # GPU architecture — common values:
+    #   sm_75  (Turing:  RTX 2080)
+    #   sm_80  (Ampere:  A100)
+    #   sm_86  (Ampere:  RTX 3090)
+    #   sm_89  (Ada:     RTX 4090)
+    #   sm_90  (Hopper:  H100)
+    - --cuda-gpu-arch=sm_86
+
+    # CUDA toolkit headers
+    - -I/usr/local/cuda/include
+
+    # OptiX SDK headers (adjust version)
+    # - -I/opt/optix/include
+    # - -I/home/user/NVIDIA-OptiX-SDK-8.0.0/include
+
+    # Suppress noisy CUDA driver API warnings
+    - -Wno-unknown-cuda-version
+
+  Remove:
+    # nvcc passes these; clangd doesn't understand them
+    - -forward-unknown-to-host-compiler
+    - --options-file
+    - --generate-dependencies-with-compile
+    - --dependency-output=*.d
+    - -Xcompiler*
+    - -Xcudafe*
+
+Diagnostics:
+  Suppress:
+    - drv_unknown_argument
+    - cuda_unknown_type
+
+Index:
+  Background: Build
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
