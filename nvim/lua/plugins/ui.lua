@@ -95,6 +95,7 @@ return {
   {
     "nvimdev/dashboard-nvim",
     event = "VimEnter",
+    cond = function() return not vim.env.KITTY_SCROLLBACK_NVIM end,
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function(_, opts)
       opts.config.project.action = function(path)
