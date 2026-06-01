@@ -1,0 +1,42 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "context": "Help",
+      "bindings": {
+        "ctrl+q": "help:dismiss"
+      }
+    },
+    {
+      "context": "Select",
+      "bindings": {
+        "ctrl+q": "select:cancel"
+      }
+    },
+    {
+      "context": "Settings",
+      "bindings": {
+        "ctrl+q": "confirm:no"
+      }
+    },
+    {
+      "context": "DiffDialog",
+      "bindings": {
+        "ctrl+q": "diff:dismiss"
+      }
+    },
+    {
+      "context": "Transcript",
+      "bindings": {
+        "ctrl+q": "transcript:exit"
+      }
+    },
+    {
+      "context": "Autocomplete",
+      "bindings": {
+        "ctrl+q": "autocomplete:dismiss"
+      }
+    }
+  ]
+}

@@ -18,7 +18,19 @@ map("n", "<C-Right>", ":vertical resize +2<CR>", { desc = "Increase width" })
 -- Buffer navigation
 map("n", "<S-l>", ":bnext<CR>",     { desc = "Next buffer" })
 map("n", "<S-h>", ":bprevious<CR>", { desc = "Prev buffer" })
-map("n", "<leader>bd", ":bdelete<CR>", { desc = "Close buffer" })
+local function close_buffer()
+  local buf = vim.api.nvim_get_current_buf()
+  local alt = vim.fn.bufnr("#")
+  if alt ~= -1 and alt ~= buf and vim.api.nvim_buf_is_loaded(alt) then
+    vim.api.nvim_set_current_buf(alt)
+  else
+    vim.cmd("bprevious")
+  end
+  vim.api.nvim_buf_delete(buf, {})
+end
+
+map("n", "<leader>bd", close_buffer, { desc = "Close buffer" })
+map("n", "<C-q>",      close_buffer, { desc = "Close buffer" })
 
 -- Move lines
 map("n", "<A-j>", ":m .+1<CR>==",       { desc = "Move line down" })

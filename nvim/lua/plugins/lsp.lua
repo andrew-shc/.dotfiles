@@ -113,6 +113,9 @@ return {
         settings = {
           basedpyright = {
             disableOrganizeImports = true,
+            analysis = {
+              exclude = { "**/*.ipynb" },
+            },
           },
           python = {
             analysis = {
@@ -153,17 +156,24 @@ return {
     branch = "regexp",
     ft = "python",
     dependencies = { "neovim/nvim-lspconfig", "nvim-telescope/telescope.nvim" },
-    opts = {
-      settings = {
-        -- fdfind is the binary name when installed via apt; conda install -c conda-forge fd gives "fd"
-        fd_binary_name = vim.fn.executable("fd") == 1 and "fd" or "fdfind",
-        search = {
-          anaconda_base = { enabled = true },
-          anaconda_envs = { enabled = true },
-          venv          = { enabled = false },
-        },
-      },
-    },
+    config = function()
+      local fd = vim.fn.executable("fd") == 1 and "fd" or "fdfind"
+      local conda_base = vim.fn.trim(vim.fn.system("conda info --base 2>/dev/null"))
+
+      local searches = {}
+      if conda_base ~= "" then
+        searches.conda_envs = {
+          command = fd .. " /bin/python$ " .. conda_base .. "/envs --full-path --color never -E /proc",
+          type = "anaconda",
+        }
+        searches.conda_base = {
+          command = fd .. " /bin/python$ " .. conda_base .. " --full-path --color never -E /proc --max-depth 3",
+          type = "anaconda",
+        }
+      end
+
+      require("venv-selector").setup({ settings = { search = searches } })
+    end,
     keys = {
       { "<leader>lv", "<cmd>VenvSelect<cr>", desc = "Select Python venv" },
     },
