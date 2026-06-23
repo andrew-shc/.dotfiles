@@ -18,6 +18,7 @@ return {
     },
     config = function()
       vim.treesitter.language.register("cpp", "cuda")
+      vim.treesitter.language.register("markdown", "quarto")
 
       -- Highlighting and indentation via Neovim built-ins.
       -- Guard: only start if the parser is actually installed.
@@ -26,7 +27,7 @@ return {
           "c", "cpp", "cuda", "python", "cmake", "glsl",
           "lua", "vim", "bash",
           "json", "yaml", "toml",
-          "markdown",
+          "markdown", "quarto",
         },
         callback = function()
           local lang = vim.treesitter.language.get_lang(vim.bo.filetype) or vim.bo.filetype

@@ -142,6 +142,91 @@ return {
         experimental = { ghost_text = true },
       })
 
+      -- ── BibTeX citation source for quarto/markdown ────────────────────────
+      local bib_source = {}
+      bib_source.new = function() return setmetatable({}, { __index = bib_source }) end
+      bib_source.get_trigger_characters = function() return { "@" } end
+      -- \k* (zero or more) so completions appear immediately after bare "@"
+      bib_source.get_keyword_pattern = function() return [[\k*]] end
+      bib_source.complete = function(_, _, callback)
+        local items    = {}
+        local seen     = {}
+        local file_dir = vim.fn.expand("%:p:h")
+        local lines    = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+        -- Parse bibliography paths from YAML front matter
+        local bib_files = {}
+        if lines[1] == "---" then
+          local in_bib = false
+          for i = 2, #lines do
+            local line = lines[i]
+            if line == "---" or line == "..." then break end
+
+            local val = line:match("^bibliography:%s*(.*)$")
+            if val ~= nil then
+              local inline = val:match("^%[(.-)%]$")
+              if inline then
+                -- bibliography: [a.bib, b.bib]
+                for item in inline:gmatch("[^,]+") do
+                  local f = vim.trim(item):gsub("['\"]", "")
+                  if f ~= "" then bib_files[#bib_files + 1] = f end
+                end
+                in_bib = false
+              else
+                local single = vim.trim(val):gsub("['\"]", "")
+                if single ~= "" then
+                  -- bibliography: file.bib
+                  bib_files[#bib_files + 1] = single
+                  in_bib = false
+                else
+                  in_bib = true  -- list entries follow on next lines
+                end
+              end
+            elseif in_bib then
+              local item = line:match("^%s*-%s+(.+)$")
+              if item then
+                bib_files[#bib_files + 1] = vim.trim(item):gsub("['\"]", "")
+              elseif line:match("^%S") then
+                in_bib = false
+              end
+            end
+          end
+        end
+
+        for _, name in ipairs(bib_files) do
+          local path = name:sub(1, 1) == "/" and name or (file_dir .. "/" .. name)
+          local f = io.open(path, "r")
+          if f then
+            for key in f:read("*a"):gmatch("@%w+%s*{%s*([^,%s\n]+)") do
+              if not seen[key] then
+                seen[key] = true
+                items[#items + 1] = {
+                  label         = key,
+                  insertText    = key,
+                  filterText    = key,
+                  kind          = cmp.lsp.CompletionItemKind.Reference,
+                  documentation = "BibTeX: " .. key,
+                }
+              end
+            end
+            f:close()
+          end
+        end
+        callback({ items = items, isIncomplete = false })
+      end
+      cmp.register_source("bib_cwd", bib_source)
+
+      cmp.setup.filetype({ "quarto", "markdown" }, {
+        sources = cmp.config.sources({
+          { name = "bib_cwd",  priority = 1100 },
+          { name = "nvim_lsp", priority = 1000 },
+          { name = "luasnip",  priority = 750  },
+          { name = "path",     priority = 500  },
+        }, {
+          { name = "buffer", priority = 250, keyword_length = 3 },
+        }),
+      })
+
       cmp.setup.cmdline({ "/", "?" }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = { { name = "buffer" } },

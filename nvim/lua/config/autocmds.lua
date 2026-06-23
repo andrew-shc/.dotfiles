@@ -27,6 +27,7 @@ autocmd("VimEnter", {
 -- ── Filetype detection ───────────────────────────────────────────────────────
 vim.filetype.add({
   extension = {
+    qmd  = "quarto",
     cu   = "cuda",
     cuh  = "cuda",
     ptx  = "asm",      -- NVIDIA PTX assembly
@@ -83,7 +84,7 @@ autocmd("BufReadPost", {
 -- ── Language-specific indent ─────────────────────────────────────────────────
 autocmd("FileType", {
   group = augroup("two_space_indent", { clear = true }),
-  pattern = { "lua", "yaml", "json", "cmake", "toml", "glsl" },
+  pattern = { "lua", "yaml", "json", "cmake", "toml", "glsl", "quarto", "markdown" },
   callback = function()
     vim.bo.tabstop = 2
     vim.bo.shiftwidth = 2

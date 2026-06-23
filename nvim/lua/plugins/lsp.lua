@@ -12,7 +12,7 @@ return {
     lazy = false,
     dependencies = "williamboman/mason.nvim",
     opts = {
-      ensure_installed = { "clangd", "basedpyright", "cmake", "lua_ls" },
+      ensure_installed = { "clangd", "basedpyright", "cmake", "lua_ls", "marksman" },
       automatic_installation = true,
     },
   },
@@ -133,6 +133,13 @@ return {
 
 
 
+      -- ── marksman ── Markdown / Quarto (links, headings, references) ──────────
+      vim.lsp.config("marksman", {
+        capabilities = caps,
+        filetypes = { "markdown", "quarto" },
+        root_markers = { ".marksman.toml", ".git" },
+      })
+
       -- ── lua_ls ── for editing this config ─────────────────────────────────
       vim.lsp.config("lua_ls", {
         capabilities = caps,
@@ -146,7 +153,7 @@ return {
         },
       })
 
-      vim.lsp.enable({ "clangd", "basedpyright", "cmake", "lua_ls" })
+      vim.lsp.enable({ "clangd", "basedpyright", "cmake", "lua_ls", "marksman" })
     end,
   },
 

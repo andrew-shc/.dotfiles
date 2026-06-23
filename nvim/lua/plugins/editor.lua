@@ -162,6 +162,7 @@ return {
         { "<leader>j",  group = "jupyter / cells" },
         { "<leader>l",  group = "lsp" },
         { "<leader>m",  group = "cmake / make" },
+        { "<leader>o",  group = "outline" },
         { "<leader>s",  group = "swap params" },
         { "<leader>t",  group = "terminal" },
         { "<leader>x",  group = "diagnostics" },
