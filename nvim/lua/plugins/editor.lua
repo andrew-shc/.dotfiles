@@ -71,6 +71,10 @@ return {
         width = 35,
         mappings = {
           ["<space>"] = "none",  -- don't steal leader key
+          ["Y"] = function(state)
+            local node = state.tree:get_node()
+            vim.fn.setreg("+", node.name)
+          end,
         },
       },
       close_if_last_window = false,
@@ -145,7 +149,13 @@ return {
   {
     "numToStr/Comment.nvim",
     event = { "BufReadPost", "BufNewFile" },
-    opts = {},
+    opts = {
+      pre_hook = function(ctx)
+        local ft = vim.bo.filetype
+        if ft == "html" then return "<!--%s-->" end
+        if ft == "css" then return "/*%s*/" end
+      end,
+    },
   },
 
   -- ── Which-key ─────────────────────────────────────────────────────────────

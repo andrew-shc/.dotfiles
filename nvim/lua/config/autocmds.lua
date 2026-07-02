@@ -97,6 +97,12 @@ autocmd("FileType", {
   callback = function() vim.bo.commentstring = "# %s" end,
 })
 
+autocmd("FileType", {
+  group = augroup("html_comment", { clear = true }),
+  pattern = { "html" },
+  callback = function() vim.bo.commentstring = "<!-- %s -->" end,
+})
+
 -- ── Sync project.nvim history → dashboard cache on quit ──────────────────────
 -- Dashboard uses its own Lua-serialized cache; project.nvim writes plain text.
 -- This merges both so the dashboard always shows all known projects.
