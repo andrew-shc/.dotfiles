@@ -26,6 +26,7 @@ symlink() {
 
 # Directory symlinks (~/.config/X -> dotfiles/X)
 symlink "$DOTFILES/nvim"                    "$HOME/.config/nvim"
+symlink "$DOTFILES/clangd"                  "$HOME/.config/clangd"
 
 # File symlinks (claude can't use a directory symlink for ~/.claude itself)
 symlink "$DOTFILES/claude/keybindings.json" "$HOME/.claude/keybindings.json"

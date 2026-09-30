@@ -86,6 +86,7 @@ return {
         }),
         cmd = {
           "clangd",
+          "--query-driver=/usr/bin/g++",
           "--background-index",
           "--clang-tidy",
           "--header-insertion=iwyu",
