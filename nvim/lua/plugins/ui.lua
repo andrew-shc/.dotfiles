@@ -10,7 +10,7 @@ return {
       disable_italic_comments = true,
     },
     config = function(_, opts)
-      vim.o.background = "light"
+      vim.o.background = "dark"
       require("everforest").setup(opts)
       vim.cmd.colorscheme("everforest")
     end,

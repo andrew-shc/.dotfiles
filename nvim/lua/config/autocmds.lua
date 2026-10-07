@@ -46,13 +46,14 @@ vim.filetype.add({
   },
 })
 
--- Enable the built-in syntax rules before lazy-loaded Treesitter adds detail.
--- This guarantees C/C++ keywords remain visibly highlighted.
-autocmd("FileType", {
+-- Reapply C/C++ syntax when entering a buffer in case it was opened before
+-- lazy-loaded Treesitter finished initializing.
+autocmd({ "FileType", "BufEnter" }, {
   group = augroup("native_syntax", { clear = true }),
-  pattern = { "c", "cpp", "cuda" },
   callback = function()
-    vim.bo.syntax = vim.bo.filetype
+    if vim.tbl_contains({ "c", "cpp", "cuda" }, vim.bo.filetype) then
+      vim.bo.syntax = vim.bo.filetype
+    end
   end,
 })
 
