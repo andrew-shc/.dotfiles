@@ -1,17 +1,18 @@
 return {
-  -- ── Color scheme (VS Code Dark+) ────────────────────────────────────────────
+  -- ── Color scheme (Kanagawa Lotus) ──────────────────────────────────────────
   {
-    "Mofiqul/vscode.nvim",
+    "rebelot/kanagawa.nvim",
     priority = 1000,
     opts = {
-      style = "dark",
-      transparent = false,
-      italic_comments = true,
-      disable_nvimtree_bg = true,
+      theme = "lotus",
+      background = { light = "lotus" },
+      keywordStyle = { italic = false },
+      statementStyle = { bold = true },
     },
     config = function(_, opts)
-      require("vscode").setup(opts)
-      vim.cmd.colorscheme("vscode")
+      vim.o.background = "light"
+      require("kanagawa").setup(opts)
+      vim.cmd.colorscheme("kanagawa-lotus")
     end,
   },
 

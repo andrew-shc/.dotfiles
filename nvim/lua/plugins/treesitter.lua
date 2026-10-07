@@ -30,6 +30,8 @@ return {
           "markdown", "quarto",
         },
         callback = function()
+          -- Native syntax supplies a reliable baseline; Treesitter overlays it.
+          vim.bo.syntax = vim.bo.filetype
           local lang = vim.treesitter.language.get_lang(vim.bo.filetype) or vim.bo.filetype
           if pcall(vim.treesitter.start, 0, lang) then
             vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
