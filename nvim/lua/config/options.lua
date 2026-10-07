@@ -1,5 +1,8 @@
 local opt = vim.opt
 
+-- Keep Vim's syntax rules available when a Treesitter parser is unavailable.
+vim.cmd("syntax enable")
+
 -- Line numbers
 opt.number = true
 opt.relativenumber = true
