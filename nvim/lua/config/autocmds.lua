@@ -46,6 +46,16 @@ vim.filetype.add({
   },
 })
 
+-- Enable the built-in syntax rules before lazy-loaded Treesitter adds detail.
+-- This guarantees C/C++ keywords remain visibly highlighted.
+autocmd("FileType", {
+  group = augroup("native_syntax", { clear = true }),
+  pattern = { "c", "cpp", "cuda" },
+  callback = function()
+    vim.bo.syntax = vim.bo.filetype
+  end,
+})
+
 -- CUDA settings (clangd handles it as C++/CUDA)
 autocmd("FileType", {
   group = augroup("cuda_ft", { clear = true }),

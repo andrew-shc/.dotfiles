@@ -1,18 +1,18 @@
 return {
-  -- ── Color scheme (Kanagawa Lotus) ──────────────────────────────────────────
+  -- ── Color scheme (Everforest Light) ────────────────────────────────────────
   {
-    "rebelot/kanagawa.nvim",
+    "neanias/everforest-nvim",
     priority = 1000,
     opts = {
-      theme = "lotus",
-      background = { light = "lotus" },
-      keywordStyle = { italic = false },
-      statementStyle = { bold = true },
+      background = "medium",
+      ui_contrast = "high",
+      italics = false,
+      disable_italic_comments = true,
     },
     config = function(_, opts)
       vim.o.background = "light"
-      require("kanagawa").setup(opts)
-      vim.cmd.colorscheme("kanagawa-lotus")
+      require("everforest").setup(opts)
+      vim.cmd.colorscheme("everforest")
     end,
   },
 
